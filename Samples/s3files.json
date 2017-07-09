@@ -1,0 +1,61 @@
+{
+    "buckets": [
+        {
+            "name": "default-dest-and-is-src",
+            "defaultDest": "/data/initial_project/data/google/",
+            "destIsSrc": 1,
+            "s3Files": [
+                {
+                    "srcKey": "2017_04_01/Events.csv",
+                    "destFile": ""
+                },
+                {
+                    "srcKey": "2017_04_01/Pageviews.csv",
+                    "destFile": ""
+                },
+                {
+                    "srcKey": "2017_04_01/Sessions.csv",
+                    "destFile": ""
+                }
+            ]
+        },
+          {
+            "name": "default-dest-and-is-not-src",
+            "defaultDest": "/data/initial_project/data/google/2017_04_01/",
+            "destIsSrc": 0,
+            "s3Files": [
+                {
+                    "srcKey": "2017_04_01/Events.csv",
+                    "destFile": "NewEvents.csv"
+                },
+                {
+                    "srcKey": "2017_04_01/Pageviews.csv",
+                    "destFile": "NewPageviews.csv"
+                },
+                {
+                    "srcKey": "2017_04_01/Sessions.csv",
+                    "destFile": "NewSessions.csv"
+                }
+            ]
+        },
+           {
+            "name": "no-default-dest-and-is-not-src",
+            "defaultDest": "",
+            "destIsSrc": 0,
+            "s3Files": [
+                {
+                    "srcKey": "2017_04_01/Events.csv",
+                    "destFile": "/data/initial_project/data/google/2017_04_01/NewEvents.csv"
+                },
+                {
+                    "srcKey": "2017_04_01/Pageviews.csv",
+                    "destFile": "/data/initial_project/data/google/2017_04_01/NewPageviews.csv"
+                },
+                {
+                    "srcKey": "2017_04_01/Sessions.csv",
+                    "destFile": "/data/initial_project/data/google/2017_04_01/NewSessions.csv"
+                }
+            ]
+        }    
+    ]
+}

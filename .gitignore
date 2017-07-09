@@ -26,5 +26,6 @@ build.sbt
 
 #Other
 *.json
+!Samples/*.json
 .idea/
 *.log
