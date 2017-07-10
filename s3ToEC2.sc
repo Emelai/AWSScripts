@@ -43,7 +43,7 @@ val bucketListFromJson: JsResult[BucketList] = Json.fromJson[BucketList](jsonStr
  * case e: JsError => println("Errors: " + JsError.toJson(e).toString())
  *}
 */
-amm
+
 bucketListFromJson match {
   case JsSuccess(bl: BucketList, path: JsPath) => 
     for (b <- bl.buckets) {
