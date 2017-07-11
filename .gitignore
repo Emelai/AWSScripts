@@ -25,7 +25,7 @@ build.sbt
 .idea/*
 
 #Other
-*.json
-!Samples/*.json
 .idea/
+.vscode/
+s3files.json
 *.log
