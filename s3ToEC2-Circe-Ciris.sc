@@ -1,4 +1,4 @@
-
+@doc("A script to copy any number of files from s3 to local machine based on a json file listing source and dest")
 import $ivy.`io.circe::circe-core:0.8.0`
 import $ivy.`io.circe::circe-generic:0.8.0`
 import $ivy.`io.circe::circe-parser:0.8.0`
