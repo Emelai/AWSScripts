@@ -1,0 +1,23 @@
+{
+    "buckets": [
+        {
+            "name": "google-in",
+            "defaultDest": "/Users/yourname/awstest/",
+            "destIsSrc": 1,
+            "s3Files": [
+                {
+                    "srcKey": "2017_04_01/Events.csv",
+                    "destFile": ""
+                },
+                {
+                    "srcKey": "2017_04_01/Pageviews.csv",
+                    "destFile": ""
+                },
+                {
+                    "srcKey": "2017_04_01/Sessions.csv",
+                    "destFile": ""
+                }
+            ]
+        }
+    ]
+}

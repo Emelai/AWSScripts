@@ -27,5 +27,6 @@ build.sbt
 #Other
 .idea/
 .vscode/
-s3files.json
+!s3files.json
 *.log
+s3Body.json
