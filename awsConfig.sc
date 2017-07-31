@@ -6,30 +6,52 @@
 * or system properites or just straight up.
 */
 import $ivy.`is.cir::ciris-core:0.4.0`, ciris._
-//import $ivy.`is.cir::ciris-enumeratum:0.4.0`, ciris.enumeratum._
-//import $ivy.`is.cir::ciris-generic:0.4.0`, ciris.generic._
-//import $ivy.`is.cir::ciris-refined:0.4.0`, ciris.refined._
+import $ivy.`is.cir::ciris-enumeratum:0.4.0`, ciris.enumeratum._
+import $ivy.`is.cir::ciris-generic:0.4.0`, ciris.generic._
+import $ivy.`is.cir::ciris-refined:0.4.0`, ciris.refined._
 //import $ivy.`is.cir::ciris-squants:0.4.0`, ciris.squants._
 
+import enumeratum._
+// define enumerations
+
+object enumerations {
+  sealed abstract class AppEnvironment extends EnumEntry
+  object AppEnvironment extends Enum[AppEnvironment] {
+    case object Local extends AppEnvironment
+    case object Testing extends AppEnvironment
+    case object Production extends AppEnvironment
+
+    val values = findValues 
+  }
+}
+val lEnums = enumerations
 
 // Define Config case classes
 case class AWSProfileConfig(
-  awsProfile: String, 
+  awsProfile: String,
   )
 case class AWSSQSConfig(
   numQueues: Int, 
   sqsQueueList: List[String]
   )
-// The first example is really not necessary since if you have it defined you dont need to use --profile
-// We include it just to show how it works with environmental variables.
-val awsProfile =
-  loadConfig(
-    env[String]("AWS_DEFAULT_PROFILE")
-  ) { (awsProfile) =>
-    AWSProfileConfig(
-      awsProfile = awsProfile
-    )
+
+withValue(env[Option[lEnums.AppEnvironment]]("APP_ENV")) {
+  case Some(lEnums.AppEnvironment.Local) | None =>
+    loadConfig(
+      env[String]("AWS_DEFAULT_PROFILE")
+    ) { (awsProfile) =>
+        AWSProfileConfig(
+          awsProfile = awsProfile
+        )
+      }
+  case _ =>
+      loadConfig(
+        AWSProfileConfig(
+          awsProfile = "default"
+        )
+      )
   }
+
   val sqsQueues = 
   loadConfig(
     AWSSQSConfig(
