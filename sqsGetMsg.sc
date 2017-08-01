@@ -84,8 +84,12 @@ for (sQueue <- listQueues) {
             // get the approximate number of messages in Queue
             val _numMsgs = JsonPath.root.Attributes.ApproximateNumberOfMessages.string
             val numMsgs = _numMsgs.getOption(qAttributesJ).getOrElse("").toString.toInt
-            // loop numMsgs+ 1 because its "Approximate" number of messages
-            0 to numMsgs foreach { _ =>
+            // loop numMsgs because its "Approximate" number of messages & may be less than actual number. 
+            // This still will give expected behavior in usual case where there is only one message.
+            // That's because even though loop again after delete one message, if queue still empty get Success.
+            // If attempt happens too close get a Success but it's empty since message is "in flight". Since copy takes a while likely won't happen
+            // 
+            0 to numMsgs foreach { _ => {
                 val eventT = Try(%%('aws,"sqs","receive-message","--queue-url",qURL,"--attribute-names","All","--message-attribute-names","All"))
                 val eventS = eventT match {
                     case Success(eventT) => eventT.out.string
@@ -143,6 +147,7 @@ for (sQueue <- listQueues) {
                 } else {
                     println("failed to get SQS messages with message " + eventS)
                 }
+            }
             }
         } else {
             println("failed to get queue attributes with message " + qAttributesS)
