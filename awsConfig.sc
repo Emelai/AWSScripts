@@ -6,45 +6,38 @@
 * or system properites or just straight up.
 */
 import $ivy.`is.cir::ciris-core:0.4.0`, ciris._
-import $ivy.`is.cir::ciris-enumeratum:0.4.0`, ciris.enumeratum._
-import $ivy.`is.cir::ciris-generic:0.4.0`, ciris.generic._
-import $ivy.`is.cir::ciris-refined:0.4.0`, ciris.refined._
+//import $ivy.`is.cir::ciris-enumeratum:0.4.0`, ciris.enumeratum._
+//import $ivy.`is.cir::ciris-generic:0.4.0`, ciris.generic._
+//import $ivy.`is.cir::ciris-refined:0.4.0`, ciris.refined._
 //import $ivy.`is.cir::ciris-squants:0.4.0`, ciris.squants._
 
-import enumeratum._
+import $exec.enumerations
+import enumerations.myEnumerations._
 // define enumerations
-
-object enumerations {
-  sealed abstract class AppEnvironment extends EnumEntry
-  object AppEnvironment extends Enum[AppEnvironment] {
-    case object Local extends AppEnvironment
-    case object Testing extends AppEnvironment
-    case object Production extends AppEnvironment
-
-    val values = findValues 
-  }
-}
-val lEnums = enumerations
+//val lEnums = enumerations
 
 // Define Config case classes
 case class AWSProfileConfig(
   awsProfile: String,
   )
 case class AWSSQSConfig(
-  numQueues: Int, 
+  numMessages: Int, 
   sqsQueueList: List[String]
   )
 
-withValue(env[Option[lEnums.AppEnvironment]]("APP_ENV")) {
-  case Some(lEnums.AppEnvironment.Local) | None =>
+//withValue(env[Option[lEnums.AppEnvironment]]("APP_ENV")) {
+//  case Some(lEnums.AppEnvironment.Local) | None =>
+val awsProfile = withValue(env[Option[AppEnvironment]]("APP_ENV")) {
+  case Some(AppEnvironment.Local) =>
     loadConfig(
+      // on Local will be changing profile depending on what working on, so set in env
       env[String]("AWS_DEFAULT_PROFILE")
     ) { (awsProfile) =>
         AWSProfileConfig(
           awsProfile = awsProfile
         )
       }
-  case _ =>
+  case _ | None =>
       loadConfig(
         AWSProfileConfig(
           awsProfile = "default"
@@ -55,7 +48,7 @@ withValue(env[Option[lEnums.AppEnvironment]]("APP_ENV")) {
   val sqsQueues = 
   loadConfig(
     AWSSQSConfig(
-      numQueues = 1,
+      numMessages = 10,
       sqsQueueList = List("R-Start-Q")
     )
   )
