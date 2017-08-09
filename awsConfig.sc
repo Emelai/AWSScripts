@@ -12,7 +12,7 @@ import $ivy.`is.cir::ciris-core:0.4.0`, ciris._
 //import $ivy.`is.cir::ciris-squants:0.4.0`, ciris.squants._
 
 import $exec.enumerations
-import enumerations.myEnumerations._
+import enumerations.awsEnumerations._
 // define enumerations
 //val lEnums = enumerations
 
@@ -52,3 +52,25 @@ val awsProfile = withValue(env[Option[AppEnvironment]]("APP_ENV")) {
       sqsQueueList = List("R-Start-Q")
     )
   )
+
+  // 
+  // Create a series of methods that give you configs based on enum.
+  // First call the function which uses the string which comes from the SQS event, to finds the appropriate enum
+  // The calling script then can use the enum to get the configs needed on demand from the other medthods
+  // This approach allows for dynamic configuration based on data you receive in the event
+  //
+  def s3BucketEnum(s3Info:String) = {
+    s3Info match {
+      case "zap-nbo-in" => S3Bucket.withName("NBO")
+      case "zap-cro-in" => S3Bucket.withName("CRO")
+      case _ => S3Bucket.withName("TESTIT")
+    }
+  }
+  def s3CopyConfig(s3BucketEnum:S3Bucket) = {
+    case class S3CopyFiles(testIt : Int)
+    s3BucketEnum match {
+      case S3Bucket.NBO => loadConfig(S3CopyFiles(testIt = 3))
+      case S3Bucket.CRO => loadConfig(S3CopyFiles(testIt = 5))
+      case _  => loadConfig(S3CopyFiles(testIt = 1))
+    }
+  }
