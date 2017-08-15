@@ -24,7 +24,10 @@ case class AWSSQSConfig(
   numMessages: Int, 
   sqsQueueList: List[String]
   )
-
+case class S3CopyFiles(
+  filesList : List[String],
+  dirName : String
+  )
 //withValue(env[Option[lEnums.AppEnvironment]]("APP_ENV")) {
 //  case Some(lEnums.AppEnvironment.Local) | None =>
 val awsProfile = withValue(env[Option[AppEnvironment]]("APP_ENV")) {
@@ -61,16 +64,30 @@ val awsProfile = withValue(env[Option[AppEnvironment]]("APP_ENV")) {
   //
   def s3BucketEnum(s3Info:String) = {
     s3Info match {
-      case "zap-nbo-in" => S3Bucket.withName("NBO")
-      case "zap-cro-in" => S3Bucket.withName("CRO")
+      case "zapgroup-nbo-in" => S3Bucket.withName("NBO")
+      case "zapgroup-cro-in" => S3Bucket.withName("CRO")
       case _ => S3Bucket.withName("TESTIT")
     }
   }
   def s3CopyConfig(s3BucketEnum:S3Bucket) = {
-    case class S3CopyFiles(testIt : Int)
     s3BucketEnum match {
-      case S3Bucket.NBO => loadConfig(S3CopyFiles(testIt = 3))
-      case S3Bucket.CRO => loadConfig(S3CopyFiles(testIt = 5))
-      case _  => loadConfig(S3CopyFiles(testIt = 1))
+      case S3Bucket.NBO => loadConfig(
+        S3CopyFiles(
+        filesList = List("nbo_assets.csv","customers_delta.csv","success.txt"),
+        dirName = "NBO"
+        )
+      )
+      case S3Bucket.CRO => loadConfig(
+        S3CopyFiles(
+          filesList = Nil,
+          dirName = "CRO"
+        )
+      )
+      case _  => loadConfig(
+        S3CopyFiles(
+          filesList = Nil,
+          dirName = "TESTIT"
+        )
+      )
     }
   }

@@ -128,7 +128,7 @@ for (sQueue <- listQueues) {
                         val _bucketName = JsonPath.root.bucket.name.string
                         val bucketName = _bucketName.getOption(s3J).getOrElse().toString
                         val _s3Key = JsonPath.root.s3Object.key.string
-                        val s3Key = _s3Key.getOption(s3J).getOrElse().toString
+                        val s3Key = _s3Key.getOption(s3J).getOrElse().toString.takeWhile(_ != '/')
                         if (DateTime.now > eventTime + 24.hours) {
                             // event is more than 24 hours old, discard it
                             println("discarding S3 event from bucket " + bucketName + " key "+ s3Key +
@@ -136,12 +136,45 @@ for (sQueue <- listQueues) {
                             val discardEvent = Try(%%('aws,"sqs","delete-message","--queue-url",qURL,
                             "--receipt-handle",receiptHandle))
                             discardEvent match {
-                            case Success(discardEvent) => println("Discard Successful")
-                            case Failure(discardEvent) => println("Discard Failed")
+                                case Success(discardEvent) => println("Discard Successful")
+                                case Failure(discardEvent) => println("Discard Failed")
                             }
                         } else {
                             // copy files from S3 and process 
                             println("copying...")
+                            // get configuration info for Bucket in message
+                            val s3BN = s3BucketEnum(bucketName)
+                            val files2Copy = s3CopyConfig(s3BN).right.get.filesList
+                            val dirName = s3CopyConfig(s3BN).right.get.dirName
+                            // Create target directories
+                            val dir2MkI = s"/data/$dirName/DataIn/$s3Key"
+                            val dir2MkO = s"/data/$dirName/DataOut/$s3Key"
+                            val failFile = Path(s"/data/$dirName/DataIn/failure.txt")
+                            mkdir! Path(dir2MkI)
+                            mkdir! Path(dir2MkO)
+                            // copy files in list to local
+                            for (fileN <- files2Copy) {
+                                val copyT = Try(%%('aws,"s3","cp",s"s3://$bucketName/$s3Key/$fileN",dir2MkI))
+                                val copyS = copyT match {
+                                    case Success(copyT) => copyT.out.string
+                                    case Failure(copyT) => copyT.getMessage
+                                }
+                                if(copyT.isFailure) {
+                                    println(s"failed to copy file $fileN with message $copyS")
+                                    write(failFile,"failed")
+                                }
+                            }
+                            val testFail = Try(ops.read(failFile))
+                            if (testFail.isFailure) {
+                                println("doProcessing")
+                            }
+                            // discard event after processing
+                            println("discarding S3 event from bucket " + bucketName + " key "+ s3Key + " from date " + eventTime.toDate.toString)
+                            val discardEvent = Try(%%('aws,"sqs","delete-message","--queue-url",qURL,"--receipt-handle",receiptHandle))
+                            discardEvent match {
+                                case Success(discardEvent) => println("Discard Successful")
+                                case Failure(discardEvent) => println("Discard Failed")
+                            }
                         }
                     }
                 } else {
