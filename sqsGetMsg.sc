@@ -178,7 +178,7 @@ for (sQueue <- listQueues) {
                                     case Failure(procT) => procT.getMessage
                                 }
                                 if(procT.isFailure) {
-                                    println(s"failed toprocesscopy file $fileN with message $proc S")
+                                    println(s"$procSc failed with message $procS")
                                 }
                             }
                             // discard event after processing
