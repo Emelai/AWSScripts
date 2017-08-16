@@ -1,3 +1,6 @@
+// TODO need to change orintlns to logging
+// TODO need to add SQS notification
+// TODO need to add shutdown
 import $ivy.`io.circe::circe-core:0.8.0`
 import $ivy.`io.circe::circe-generic:0.8.0`
 import $ivy.`io.circe::circe-parser:0.8.0`
@@ -146,6 +149,7 @@ for (sQueue <- listQueues) {
                             val s3BN = s3BucketEnum(bucketName)
                             val files2Copy = s3CopyConfig(s3BN).right.get.filesList
                             val dirName = s3CopyConfig(s3BN).right.get.dirName
+                            val procSc =s3CopyConfig(s3BN).right.get.procScript
                             // Create target directories
                             val dir2MkI = s"/data/$dirName/DataIn/$s3Key"
                             val dir2MkO = s"/data/$dirName/DataOut/$s3Key"
@@ -164,9 +168,18 @@ for (sQueue <- listQueues) {
                                     write(failFile,"failed")
                                 }
                             }
+                            // test if Failure file was written. If not do processing
                             val testFail = Try(ops.read(failFile))
                             if (testFail.isFailure) {
-                                println("doProcessing")
+                                println("do Processing")
+                                val procT = Try(%%('amm,procSc,s3Key))
+                                val procS = procT match {
+                                    case Success(procT) => procT.out.string
+                                    case Failure(procT) => procT.getMessage
+                                }
+                                if(procT.isFailure) {
+                                    println(s"failed toprocesscopy file $fileN with message $proc S")
+                                }
                             }
                             // discard event after processing
                             println("discarding S3 event from bucket " + bucketName + " key "+ s3Key + " from date " + eventTime.toDate.toString)

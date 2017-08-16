@@ -26,7 +26,8 @@ case class AWSSQSConfig(
   )
 case class S3CopyFiles(
   filesList : List[String],
-  dirName : String
+  dirName : String,
+  procSc : String
   )
 //withValue(env[Option[lEnums.AppEnvironment]]("APP_ENV")) {
 //  case Some(lEnums.AppEnvironment.Local) | None =>
@@ -74,19 +75,22 @@ val awsProfile = withValue(env[Option[AppEnvironment]]("APP_ENV")) {
       case S3Bucket.NBO => loadConfig(
         S3CopyFiles(
         filesList = List("nbo_assets.csv","customers_delta.csv","success.txt"),
-        dirName = "NBO"
+        dirName = "NBO",
+        procScript = "/data/NBO/Scripts/NBOProcess.sc"
         )
       )
       case S3Bucket.CRO => loadConfig(
         S3CopyFiles(
-          filesList = Nil,
-          dirName = "CRO"
+          filesList = List("cro_assets.csv","customers_delta.csv","success.txt"),
+          dirName = "CRO",
+          procScript = "/data/CRO/Scripts/NBOProcess.sc"
         )
       )
       case _  => loadConfig(
         S3CopyFiles(
-          filesList = Nil,
-          dirName = "TESTIT"
+          filesList = List("test.csv","success.txt"),
+          dirName = "TESTIT",
+          procScript = "/data/TESTIT/Scripts/TESTProcess.sc"
         )
       )
     }
