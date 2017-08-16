@@ -27,7 +27,7 @@ case class AWSSQSConfig(
 case class S3CopyFiles(
   filesList : List[String],
   dirName : String,
-  procSc : String
+  procScript : String
   )
 //withValue(env[Option[lEnums.AppEnvironment]]("APP_ENV")) {
 //  case Some(lEnums.AppEnvironment.Local) | None =>
