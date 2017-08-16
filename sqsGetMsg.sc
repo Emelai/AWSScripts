@@ -205,7 +205,7 @@ for (sQueue <- listQueues) {
         println("getting SQS queue URL failed with message " + qURLS)
     }
     // shutdown upon completion
-    val shutD = Try(%%('shutdown,"-h","now"))
+    val shutD = Try(%%('sudo,"shutdown,"-h","now"))
     val shutS = shutD match {
         case Success(shutD) => shutD.out.string
         case Failure(shutD) => shutD.getMessage
