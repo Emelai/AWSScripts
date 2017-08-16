@@ -15,13 +15,13 @@ def nboProcess(s3Key:String) ={
         case Failure(doR) => doR.getMessage
     }
     if(doR.isSuccess) {
-        val outS3 = "s3://zapgroup-r-out/" + s3Key + "/nbo.csv"
+        val outS3 = "s3://zapgroup-nbo-out/" + s3Key + "/nbo.csv"
         val copyT = Try(%%('aws,"s3","cp",outS,outS3))
         val copyS = copyT match {
             case Success(copyT) => copyT.out.string
             case Failure(copyT) => copyT.getMessage
         }
-        if(doR.isSuccess) {
+        if(copyT.isSuccess) {
             println("We're done")
         } else {
             println("Copy R output failed with message " + copyS)
