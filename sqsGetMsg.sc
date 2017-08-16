@@ -1,3 +1,4 @@
+#!/usr/bin/env amm
 // TODO need to change orintlns to logging
 // TODO need to add SQS notification
 // TODO need to add shutdown
