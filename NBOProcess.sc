@@ -1,3 +1,5 @@
+import ammonite.ops._
+import ammonite.ops.ImplicitWd._
 import scala.util.Try
 import scala.util.{Success,Failure}
 

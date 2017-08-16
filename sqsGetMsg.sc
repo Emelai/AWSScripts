@@ -1,6 +1,8 @@
 // TODO need to change orintlns to logging
 // TODO need to add SQS notification
 // TODO need to add shutdown
+import ammonite.ops._
+import ammonite.ops.ImplicitWd._
 import $ivy.`io.circe::circe-core:0.8.0`
 import $ivy.`io.circe::circe-generic:0.8.0`
 import $ivy.`io.circe::circe-parser:0.8.0`
