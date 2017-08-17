@@ -1,4 +1,4 @@
-#!/usr/bin/env amm
+#!/usr/bin/env /usr/local/bin/amm
 // TODO need to change orintlns to logging
 // TODO need to add SQS notification
 // TODO need to add shutdown
@@ -194,7 +194,7 @@ for (sQueue <- listQueues) {
                                 }
                             }
                             // discard event after processing
-                            write.append(logFile,s"$procSc failed with message $procS")"discarding S3 event from bucket " + bucketName + " key "+ s3Key + " from date " + eventTime.toDate.toString + "\n")
+                            write.append(logFile,s"discarding S3 event from bucket " + bucketName + " key "+ s3Key + " from date " + eventTime.toDate.toString + "\n")
                             val discardEvent = Try(%%('aws,"sqs","delete-message","--queue-url",qURL,"--receipt-handle",receiptHandle))
                             discardEvent match {
                                 case Success(discardEvent) => write.append(logFile,"Post-processing discard successful\n")
