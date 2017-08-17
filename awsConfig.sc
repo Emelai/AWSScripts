@@ -76,21 +76,21 @@ val awsProfile = withValue(env[Option[AppEnvironment]]("APP_ENV")) {
         S3CopyFiles(
         filesList = List("nbo_assets.csv","customers_delta.csv","success.txt"),
         dirName = "NBO",
-        procScript = "/data/NBO/Scripts/NBOProcess.sc"
+        procScript = "/data/Scripts/NBOProcess.sc"
         )
       )
       case S3Bucket.CRO => loadConfig(
         S3CopyFiles(
           filesList = List("cro_assets.csv","customers_delta.csv","success.txt"),
           dirName = "CRO",
-          procScript = "/data/CRO/Scripts/NBOProcess.sc"
+          procScript = "/data/Scripts/NBOProcess.sc"
         )
       )
       case _  => loadConfig(
         S3CopyFiles(
           filesList = List("test.csv","success.txt"),
           dirName = "TESTIT",
-          procScript = "/data/TESTIT/Scripts/TESTProcess.sc"
+          procScript = "/data/Scripts/TESTProcess.sc"
         )
       )
     }

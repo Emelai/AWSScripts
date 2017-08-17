@@ -23,6 +23,11 @@ import awsConfig._
 
 //set working directory
 val mwd = pwd
+// create log file
+val todayS = DateTime.now.toLocalDate.toString
+val timeS = DateTime.now.toLocalTime.toString
+val logFile = Path(s"log-$todayS.log",root/'data/'Scripts/'Logs)
+write(logFile,s"Log for $todayS at $timeS\n\n")
 
 /* 
 *** case classes for SQS messages - use optics instead to many problems with structure ***
@@ -76,6 +81,7 @@ for (sQueue <- listQueues) {
         case Failure(qURLT) => qURLT.getMessage
     }
     if (qURLT.isSuccess) {
+        write.append(logFile,s"successfully got queue URL with message $qURLS\n")
         // we assume since the Try succeeded the decode of the JSON will give correct value
         val qURL = parser.decode[QueueURL](qURLS).right.get.QueueUrl
         //do a Try on the aws sqs call to get the SQS queue attributes
@@ -85,11 +91,13 @@ for (sQueue <- listQueues) {
             case Failure(qAttributesT) => qAttributesT.getMessage
         }
         if (qAttributesT.isSuccess) {
+            write.append(logFile,s"successfully got queue attributes with message $qAttributesS\n")
             // Get the attribute as JSON
             val qAttributesJ = parse(qAttributesS).getOrElse(Json.Null)
             // get the approximate number of messages in Queue
             val _numMsgs = JsonPath.root.Attributes.ApproximateNumberOfMessages.string
             val numMsgs = _numMsgs.getOption(qAttributesJ).getOrElse("").toString.toInt
+            write.append(logFile,"Number of messages in attributes is " + numMsgs + "-- will loop over one more\n")
             // loop numMsgs because its "Approximate" number of messages & may be less than actual number. 
             // This still will give expected behavior in usual case where there is only one message.
             // That's because even though loop again after delete one message, if queue still empty get Success.
@@ -102,6 +110,7 @@ for (sQueue <- listQueues) {
                     case Failure(eventT) => eventT.getMessage
                 }
                 if(eventT.isSuccess) {
+                    write.append(logFile,s"successfully received message $eventS \n")
                     // get the SQS Messages as Json
                     val sqsMessageJ = parse(eventS).getOrElse(Json.Null)
                     //example with index but not the right thing to do here
@@ -137,17 +146,15 @@ for (sQueue <- listQueues) {
                         val s3Key = _s3Key.getOption(s3J).getOrElse().toString.takeWhile(_ != '/')
                         if (DateTime.now > eventTime + 24.hours) {
                             // event is more than 24 hours old, discard it
-                            println("discarding S3 event from bucket " + bucketName + " key "+ s3Key +
-                            " from date " + eventTime.toDate.toString)
-                            val discardEvent = Try(%%('aws,"sqs","delete-message","--queue-url",qURL,
-                            "--receipt-handle",receiptHandle))
+                            write.append(logFile,"discarding S3 event from bucket " + bucketName + " key "+ s3Key + " from date " + eventTime.toDate.toString + "\n")
+                            val discardEvent = Try(%%('aws,"sqs","delete-message","--queue-url",qURL,"--receipt-handle",receiptHandle))
                             discardEvent match {
-                                case Success(discardEvent) => println("Discard Successful")
-                                case Failure(discardEvent) => println("Discard Failed")
+                                case Success(discardEvent) => write.append(logFile,"Discard of old message successful\n")
+                                case Failure(discardEvent) => write.append(logFile,"Discard of old message failed\n")
                             }
                         } else {
                             // copy files from S3 and process 
-                            println("copying...")
+                            write.append(logFile,"copying...")
                             // get configuration info for Bucket in message
                             val s3BN = s3BucketEnum(bucketName)
                             val files2Copy = s3CopyConfig(s3BN).right.get.filesList
@@ -156,7 +163,7 @@ for (sQueue <- listQueues) {
                             // Create target directories
                             val dir2MkI = s"/data/$dirName/DataIn/$s3Key"
                             val dir2MkO = s"/data/$dirName/DataOut/$s3Key"
-                            val failFile = Path(s"/data/$dirName/DataIn/failure.txt")
+                            val failFile = Path(s"/data/$dirName/DataIn/$todayS-failure.txt")
                             mkdir! Path(dir2MkI)
                             mkdir! Path(dir2MkO)
                             // copy files in list to local
@@ -167,42 +174,44 @@ for (sQueue <- listQueues) {
                                     case Failure(copyT) => copyT.getMessage
                                 }
                                 if(copyT.isFailure) {
-                                    println(s"failed to copy file $fileN with message $copyS")
+                                    write.append(logFile,s"failed to copy file $fileN with message $copyS \n")
                                     write(failFile,"failed")
                                 }
                             }
                             // test if Failure file was written. If not do processing
                             val testFail = Try(ops.read(failFile))
                             if (testFail.isFailure) {
-                                println("do Processing")
+                                write.append(logFile,"doing Processing\n")
                                 val procT = Try(%%('amm,procSc,s3Key))
                                 val procS = procT match {
                                     case Success(procT) => procT.out.string
                                     case Failure(procT) => procT.getMessage
                                 }
                                 if(procT.isFailure) {
-                                    println(s"$procSc failed with message $procS")
+                                    write.append(logFile,s"$procSc failed with message $procS \n")
+                                } else {
+                                    write.append(logFile,s"Successfully processed $procSc with message $procS \n")
                                 }
                             }
                             // discard event after processing
-                            println("discarding S3 event from bucket " + bucketName + " key "+ s3Key + " from date " + eventTime.toDate.toString)
+                            write.append(logFile,s"$procSc failed with message $procS")"discarding S3 event from bucket " + bucketName + " key "+ s3Key + " from date " + eventTime.toDate.toString + "\n")
                             val discardEvent = Try(%%('aws,"sqs","delete-message","--queue-url",qURL,"--receipt-handle",receiptHandle))
                             discardEvent match {
-                                case Success(discardEvent) => println("Discard Successful")
-                                case Failure(discardEvent) => println("Discard Failed")
+                                case Success(discardEvent) => write.append(logFile,"Post-processing discard successful\n")
+                                case Failure(discardEvent) => write.append(logFile,"Post-processing discard failed\n")
                             }
                         }
                     }
                 } else {
-                    println("failed to get SQS messages with message " + eventS)
+                    write.append(logFile,"failed to get SQS messages with message " + eventS + "\n")
                 }
             }
             }
         } else {
-            println("failed to get queue attributes with message " + qAttributesS)
+            write.append(logFile,"failed to get queue attributes with message " + qAttributesS + "\n")
         }
     } else {
-        println("getting SQS queue URL failed with message " + qURLS)
+        write.append(logFile,"getting SQS queue URL failed with message " + qURLS + "\n")
     }
     // shutdown upon completion
     val shutD = Try(%%('sudo,"shutdown","-h","now"))
@@ -211,6 +220,6 @@ for (sQueue <- listQueues) {
         case Failure(shutD) => shutD.getMessage
     }
     if(shutD.isFailure) {
-        println(s"Failed to shut down w/ message $shutS")
+        write.append(logFile,s"Failed to shut down w/ message $shutS \n")
     }
 }
