@@ -22,12 +22,13 @@ The process implemented in the top level `doSQSMsgProc.sc` script has the follow
 The scripts provides error handling & simple logging which helps in figuring out what went wrong. The particular example involves processing some files using an R package. The package is already installed on the server so R scripting is almost trivial.
 
 We use a standard structure for files and directories on the disk which makes using this script for different applications easy:
-
+```
 /data - top level
 ../Scripts - where these scripts are stored& run from
 ..../Logs - where logs are written
 ../<application> - top level directory for each application
-..../DataIn - where files to be processed are copied from the S3 bucket which is named something like <application>-In
-..../DataOut - where files post-processed are stored & from there copied to the bucket which is named something like <application>-Out
+..../DataIn - where files to be processed are copied from the S3 bucket named something like <application>-In
+..../DataOut - where files post-processed are stored & then copied to the bucket named something like <application>-Out
+```
 
 There are also a bunch of scripts that do partial things and give examples of some alternative approaches. These are in the  subdirectory `PartialScripts`
