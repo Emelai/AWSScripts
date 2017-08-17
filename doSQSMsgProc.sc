@@ -21,12 +21,14 @@ import com.github.nscala_time.time.Imports._
 import $exec.awsConfig
 import awsConfig._
 
-//set working directory
+//set initial stuff
 val mwd = pwd
+val myEnv = AppEnvironment.withName(sys.env("APP_ENV"))
 // create log file
 val todayS = DateTime.now.toLocalDate.toString
 val timeS = DateTime.now.toLocalTime.toString
-val logFile = Path(s"log-$todayS.log",root/'data/'Scripts/'Logs)
+val fileS = s"log-$todayS.log"
+val logFile = Path(fileS,root/'data/'Scripts/'Logs)
 write(logFile,s"Log for $todayS at $timeS\n\n")
 
 /* 
@@ -167,6 +169,7 @@ for (sQueue <- listQueues) {
                             mkdir! Path(dir2MkI)
                             mkdir! Path(dir2MkO)
                             // copy files in list to local
+                            var failCopy = false
                             for (fileN <- files2Copy) {
                                 val copyT = Try(%%('aws,"s3","cp",s"s3://$bucketName/$s3Key/$fileN",dir2MkI))
                                 val copyS = copyT match {
@@ -175,14 +178,13 @@ for (sQueue <- listQueues) {
                                 }
                                 if(copyT.isFailure) {
                                     write.append(logFile,s"failed to copy file $fileN with message $copyS \n")
-                                    write(failFile,"failed")
+                                    failCopy = true
                                 }
                             }
-                            // test if Failure file was written. If not do processing
-                            val testFail = Try(ops.read(failFile))
-                            if (testFail.isFailure) {
+                            // if didnt fail process
+                            if (failCopy) {
                                 write.append(logFile,"doing Processing\n")
-                                val procT = Try(%%('amm,procSc,s3Key))
+                                val procT = Try(%%(root/'usr/'local/'bin/'amm,procSc,s3Key,fileS))
                                 val procS = procT match {
                                     case Success(procT) => procT.out.string
                                     case Failure(procT) => procT.getMessage
@@ -191,14 +193,26 @@ for (sQueue <- listQueues) {
                                     write.append(logFile,s"$procSc failed with message $procS \n")
                                 } else {
                                     write.append(logFile,s"Successfully processed $procSc with message $procS \n")
+                                    if (!(myEnv == AppEnvironment.Local)) {
+                                        // skip on Local machine
+                                        // discard event after successful processing
+                                        write.append(logFile,s"discarding S3 event from bucket " + bucketName + " key "+ s3Key + " from date " + eventTime.toDate.toString + "\n")
+                                        val discardEvent = Try(%%('aws,"sqs","delete-message","--queue-url",qURL,"--receipt-handle",receiptHandle))
+                                        discardEvent match {
+                                            case Success(discardEvent) => write.append(logFile,"Post-processing discard successful\n")
+                                            case Failure(discardEvent) => write.append(logFile,"Post-processing discard failed\n")
+                                        }
+                                        // shutdown upon completion
+                                        val shutD = Try(%%('sudo,"shutdown","-h","now"))
+                                        val shutS = shutD match {
+                                            case Success(shutD) => shutD.out.string
+                                            case Failure(shutD) => shutD.getMessage
+                                        }
+                                        if(shutD.isFailure) {
+                                            write.append(logFile,s"Failed to shut down w/ message $shutS \n")
+                                        }
+                                    }
                                 }
-                            }
-                            // discard event after processing
-                            write.append(logFile,s"discarding S3 event from bucket " + bucketName + " key "+ s3Key + " from date " + eventTime.toDate.toString + "\n")
-                            val discardEvent = Try(%%('aws,"sqs","delete-message","--queue-url",qURL,"--receipt-handle",receiptHandle))
-                            discardEvent match {
-                                case Success(discardEvent) => write.append(logFile,"Post-processing discard successful\n")
-                                case Failure(discardEvent) => write.append(logFile,"Post-processing discard failed\n")
                             }
                         }
                     }
@@ -212,14 +226,5 @@ for (sQueue <- listQueues) {
         }
     } else {
         write.append(logFile,"getting SQS queue URL failed with message " + qURLS + "\n")
-    }
-    // shutdown upon completion
-    val shutD = Try(%%('sudo,"shutdown","-h","now"))
-    val shutS = shutD match {
-        case Success(shutD) => shutD.out.string
-        case Failure(shutD) => shutD.getMessage
-    }
-    if(shutD.isFailure) {
-        write.append(logFile,s"Failed to shut down w/ message $shutS \n")
     }
 }
