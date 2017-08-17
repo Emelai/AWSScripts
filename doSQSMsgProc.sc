@@ -161,7 +161,8 @@ for (sQueue <- listQueues) {
                             val s3BN = s3BucketEnum(bucketName)
                             val files2Copy = s3CopyConfig(s3BN).right.get.filesList
                             val dirName = s3CopyConfig(s3BN).right.get.dirName
-                            val procSc =s3CopyConfig(s3BN).right.get.procScript
+                            val procSc = s3CopyConfig(s3BN).right.get.procScript
+                            val snsARN = s3CopyConfig(s3BN).right.get.snsARN
                             // Create target directories
                             val dir2MkI = s"/data/$dirName/DataIn/$s3Key"
                             val dir2MkO = s"/data/$dirName/DataOut/$s3Key"
@@ -191,6 +192,15 @@ for (sQueue <- listQueues) {
                                 }
                                 if(procT.isFailure) {
                                     write.append(logFile,s"$procSc failed with message $procS \n")
+                                    val snsMsg = s"Failed to process $dirName files and didnt shut down instance")
+                                        vat snsT = Try(%%('aws,"sns","publish","--topic-arn",snsARN,"--message",snsT))
+                                        val snsS = snsT match {
+                                            case Success(snsT) => snsT.out.string
+                                            case Failure(snsT) => snsT.getMessage
+                                        }
+                                        if(snsT.isFailure) {
+                                            write.append(logFile,s"Failed to to send SNS message with error $snsS\n")
+                                        }
                                 } else {
                                     write.append(logFile,s"Successfully processed $procSc with message $procS \n")
                                     if (!(myEnv == AppEnvironment.Local)) {
@@ -202,7 +212,16 @@ for (sQueue <- listQueues) {
                                             case Success(discardEvent) => write.append(logFile,"Post-processing discard successful\n")
                                             case Failure(discardEvent) => write.append(logFile,"Post-processing discard failed\n")
                                         }
-                                        // shutdown upon completion
+                                        // shutdown upon completion but first notify
+                                        val snsMsg = s"Successfully processed $dirName files and shutting down instance")
+                                        vat snsT = Try(%%('aws,"sns","publish","--topic-arn",snsARN,"--message",snsT))
+                                        val snsS = snsT match {
+                                            case Success(snsT) => snsT.out.string
+                                            case Failure(snsT) => snsT.getMessage
+                                        }
+                                        if(snsT.isFailure) {
+                                            write.append(logFile,s"Failed to to send SNS message with error $snsS\n")
+                                        }
                                         val shutD = Try(%%(root/'usr/'bin/'sudo,"shutdown","-h","now"))
                                         val shutS = shutD match {
                                             case Success(shutD) => shutD.out.string

@@ -27,7 +27,8 @@ case class AWSSQSConfig(
 case class S3CopyFiles(
   filesList : List[String],
   dirName : String,
-  procScript : String
+  procScript : String,
+  snsARN : String
   )
 //withValue(env[Option[lEnums.AppEnvironment]]("APP_ENV")) {
 //  case Some(lEnums.AppEnvironment.Local) | None =>
@@ -76,21 +77,24 @@ val awsProfile = withValue(env[Option[AppEnvironment]]("APP_ENV")) {
         S3CopyFiles(
         filesList = List("nbo_assets.csv","customers_delta.csv","success.txt"),
         dirName = "NBO",
-        procScript = "/data/Scripts/NBOProcess.sc"
+        procScript = "/data/Scripts/NBOProcess.sc",
+        snsARN = "arn:aws:sns:eu-central-1:276105822531:stop-r-instance"
         )
       )
       case S3Bucket.CRO => loadConfig(
         S3CopyFiles(
           filesList = List("cro_assets.csv","customers_delta.csv","success.txt"),
           dirName = "CRO",
-          procScript = "/data/Scripts/NBOProcess.sc"
+          procScript = "/data/Scripts/NBOProcess.sc",
+          snsARN = ""
         )
       )
       case _  => loadConfig(
         S3CopyFiles(
           filesList = List("test.csv","success.txt"),
           dirName = "TESTIT",
-          procScript = "/data/Scripts/TESTProcess.sc"
+          procScript = "/data/Scripts/TESTProcess.sc",
+          snsARN = ""
         )
       )
     }
