@@ -203,7 +203,7 @@ for (sQueue <- listQueues) {
                                             case Failure(discardEvent) => write.append(logFile,"Post-processing discard failed\n")
                                         }
                                         // shutdown upon completion
-                                        val shutD = Try(%%('sudo,"shutdown","-h","now"))
+                                        val shutD = Try(%%(root/'usr/'bin/'sudo,"shutdown","-h","now"))
                                         val shutS = shutD match {
                                             case Success(shutD) => shutD.out.string
                                             case Failure(shutD) => shutD.getMessage
