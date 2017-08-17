@@ -165,7 +165,7 @@ for (sQueue <- listQueues) {
                             // Create target directories
                             val dir2MkI = s"/data/$dirName/DataIn/$s3Key"
                             val dir2MkO = s"/data/$dirName/DataOut/$s3Key"
-                            val failFile = Path(s"/data/$dirName/DataIn/$todayS-failure.txt")
+                            //val failFile = Path(s"/data/$dirName/DataIn/$todayS-failure.txt")
                             mkdir! Path(dir2MkI)
                             mkdir! Path(dir2MkO)
                             // copy files in list to local
