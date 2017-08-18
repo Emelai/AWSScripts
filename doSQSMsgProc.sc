@@ -166,26 +166,21 @@ for (sQueue <- listQueues) {
                             // Create target directories
                             val dir2MkI = s"/data/$dirName/DataIn/$s3Key"
                             val dir2MkO = s"/data/$dirName/DataOut/$s3Key"
-                            //val failFile = Path(s"/data/$dirName/DataIn/$todayS-failure.txt")
                             mkdir! Path(dir2MkI)
                             mkdir! Path(dir2MkO)
-                            // copy files in list to local
-                            val failCopy = Path(dirName + "fail" + DateTime.now.toString,root/'Scripts/'Logs)
-                            for (fileN <- files2Copy) {
-                                val copyT = Try(%%('aws,"s3","cp",s"s3://$bucketName/$s3Key/$fileN",dir2MkI))
+                            // copy files in list to local the "Functional Way" (except for the logging :))
+                            val resList = for {
+                                fileN <- files2Copy
+                                copyT =  Try(%%('aws,"s3","cp",s"s3://$bucketName/$s3Key/$fileN",dir2MkI))
                                 val copyS = copyT match {
                                     case Success(copyT) => copyT.out.string
-                                    case Failure(copyT) => copyT.getMessage
+                                    case Failure(copyT) => write.append(logFile,s"failed to copy file *$fileN* with message $copyT.getMessage \n")
                                 }
-                                if(copyT.isFailure) {
-                                    write.append(logFile,s"failed to copy file $fileN with message $copyS \n")
-                                    // need to save state in for loop
-                                    write(failCopy,"failed copy\n")
-                                }
-                            }
-                            // if didnt fail copying
-                            val failS = Try(ops.read(failCopy))
-                            if (failS.isFailure) {
+                                val copyB = copyT.isSuccess
+                                if(!(copyB))
+                            } yield copyB
+                            // if copy all files succeeded
+                            if (resList == Nil) {
                                 write.append(logFile,"doing Processing\n")
                                 val procT = Try(%%(root/'usr/'local/'bin/'amm,procSc,s3Key,fileS))
                                 val procS = procT match {
