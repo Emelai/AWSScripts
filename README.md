@@ -30,5 +30,10 @@ We use a standard structure for files and directories on the disk which makes us
 ..../DataIn - where files to be processed are copied from the S3 bucket named something like <application>-In
 ..../DataOut - where files post-processed are stored & then copied to the bucket named something like <application>-Out
 ```
+To Do 
+1. Build Tests
+2. Functional version of logging and error handling :)
+3. Refactor repetitive code
 
+_________________________________
 There are also a bunch of scripts that do partial things and give examples of some alternative approaches. These are in the  subdirectory `PartialScripts`
