@@ -192,7 +192,7 @@ for (sQueue <- listQueues) {
                                 }
                                 if(procT.isFailure) {
                                     write.append(logFile,s"$procSc failed with message $procS \n")
-                                    val snsMsg = s"Failed to process $dirName files and didnt shut down instance")
+                                    val snsMsg = s"Failed to process $dirName files and didnt shut down instance"
                                         vat snsT = Try(%%('aws,"sns","publish","--topic-arn",snsARN,"--message",snsT))
                                         val snsS = snsT match {
                                             case Success(snsT) => snsT.out.string
@@ -213,7 +213,7 @@ for (sQueue <- listQueues) {
                                             case Failure(discardEvent) => write.append(logFile,"Post-processing discard failed\n")
                                         }
                                         // shutdown upon completion but first notify
-                                        val snsMsg = s"Successfully processed $dirName files and shutting down instance")
+                                        val snsMsg = s"Successfully processed $dirName files and shutting down instance"
                                         vat snsT = Try(%%('aws,"sns","publish","--topic-arn",snsARN,"--message",snsT))
                                         val snsS = snsT match {
                                             case Success(snsT) => snsT.out.string
