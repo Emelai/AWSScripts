@@ -156,7 +156,7 @@ for (sQueue <- listQueues) {
                             }
                         } else {
                             // copy files from S3 and process 
-                            write.append(logFile,"copying...")
+                            write.append(logFile,"copying files from S3\n")
                             // get configuration info for Bucket in message
                             val s3BN = s3BucketEnum(bucketName)
                             val files2Copy = s3CopyConfig(s3BN).right.get.filesList
@@ -170,7 +170,7 @@ for (sQueue <- listQueues) {
                             mkdir! Path(dir2MkI)
                             mkdir! Path(dir2MkO)
                             // copy files in list to local
-                            var failCopy = false
+                            val failCopy = Path(dirName + "fail" + DateTime.now.toString,root/'Scripts/'Logs)
                             for (fileN <- files2Copy) {
                                 val copyT = Try(%%('aws,"s3","cp",s"s3://$bucketName/$s3Key/$fileN",dir2MkI))
                                 val copyS = copyT match {
@@ -179,11 +179,13 @@ for (sQueue <- listQueues) {
                                 }
                                 if(copyT.isFailure) {
                                     write.append(logFile,s"failed to copy file $fileN with message $copyS \n")
-                                    failCopy = true
+                                    // need to save state in for loop
+                                    write(failCopy,"failed copy\n")
                                 }
                             }
-                            // if didnt fail process
-                            if (failCopy) {
+                            // if didnt fail copying
+                            val failS = Try(ops.read(failCopy))
+                            if (failS.isFailure) {
                                 write.append(logFile,"doing Processing\n")
                                 val procT = Try(%%(root/'usr/'local/'bin/'amm,procSc,s3Key,fileS))
                                 val procS = procT match {
