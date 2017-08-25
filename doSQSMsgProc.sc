@@ -1,7 +1,5 @@
 #!/usr/bin/env /usr/local/bin/amm
-// TODO need to change orintlns to logging
-// TODO need to add SQS notification
-// TODO need to add shutdown
+// TODO need to add test 
 import ammonite.ops._
 import ammonite.ops.ImplicitWd._
 import $ivy.`io.circe::circe-core:0.8.0`
